@@ -2282,7 +2282,9 @@
     const GITLAB_TOKEN_REMEMBER_KEY = 'octopush-gitlab-token-remember';
 
     function saveGitlabToken() {
-      const token = document.getElementById('gitlabTokenInput')?.value.trim() || '';
+      const input = document.getElementById('gitlabTokenInput');
+      const token = sanitizeGitlabToken(input?.value || '');
+      if (input && input.value !== token) input.value = token;
       const remember = document.getElementById('rememberGitlabToken')?.checked || false;
 
       if (remember) {
@@ -2321,16 +2323,34 @@
       showToast('已清除 GitLab token');
     }
 
+    function sanitizeGitlabToken(value) {
+      return String(value || '')
+        .trim()
+        .replace(/[\u200B-\u200D\uFEFF]/g, '')
+        .replace(/[^\x21-\x7E]/g, '');
+    }
+
+    function isValidHeaderValue(value) {
+      return /^[\x21-\x7E]+$/.test(value);
+    }
+
     async function submitGitlabIssue() {
       if (comments.length === 0) {
         showToast('没有评论可提交');
         return;
       }
 
-      const token = document.getElementById('gitlabTokenInput')?.value.trim() || '';
+      const tokenInput = document.getElementById('gitlabTokenInput');
+      const token = sanitizeGitlabToken(tokenInput?.value || '');
+      if (tokenInput && tokenInput.value !== token) tokenInput.value = token;
       if (!token) {
         showToast('请先填写 GitLab token');
-        document.getElementById('gitlabTokenInput')?.focus();
+        tokenInput?.focus();
+        return;
+      }
+      if (!isValidHeaderValue(token)) {
+        showToast('GitLab token 包含非法字符，请重新粘贴');
+        tokenInput?.focus();
         return;
       }
       saveGitlabToken();
@@ -2367,7 +2387,7 @@
         const res = await fetch(`${GITLAB_BASE_URL}/api/v4/projects/${GITLAB_PROJECT_ID}/issues`, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${token}`,
+            'PRIVATE-TOKEN': token,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
