@@ -816,6 +816,23 @@
       box-shadow: 0 0 0 2px rgba(99, 102, 241, .14);
     }
 
+    .token-remember {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      height: 25px;
+      color: var(--gray-700);
+      font-size: 10px;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    .token-remember input {
+      width: 12px;
+      height: 12px;
+      accent-color: var(--primary);
+    }
+
     .cp-list {
       flex: 1;
       overflow-y: auto;
@@ -1271,6 +1288,11 @@
       <span class="cp-title">评审意见</span>
       <div class="cp-actions">
         <input class="token-input" id="gitlabTokenInput" type="password" placeholder="GitLab token" autocomplete="off" oninput="saveGitlabToken()" />
+        <label class="token-remember" title="仅保存在当前浏览器">
+          <input id="rememberGitlabToken" type="checkbox" onchange="saveGitlabToken()" />
+          记住
+        </label>
+        <button class="cp-btn" onclick="clearGitlabToken()">清除 token</button>
         <button class="cp-btn" onclick="exportComments()" style="border-color:var(--primary);color:var(--primary)">复制全部</button>
         <button class="cp-btn" id="submitIssueBtn" onclick="submitGitlabIssue()">提交 Issue</button>
         <button class="cp-btn cp-btn-danger" onclick="clearComments()">清空</button>
@@ -2255,16 +2277,48 @@
     const GITLAB_BASE_URL = 'https://codex.mlamp.cn';
     const GITLAB_PROJECT_ID = '167';
     const GITLAB_ISSUE_LABELS = 'prototype-review,OctoPush';
+    const GITLAB_TOKEN_SESSION_KEY = 'octopush-gitlab-token';
+    const GITLAB_TOKEN_LOCAL_KEY = 'octopush-gitlab-token-persistent';
+    const GITLAB_TOKEN_REMEMBER_KEY = 'octopush-gitlab-token-remember';
 
     function saveGitlabToken() {
       const token = document.getElementById('gitlabTokenInput')?.value.trim() || '';
-      if (token) sessionStorage.setItem('octopush-gitlab-token', token);
-      else sessionStorage.removeItem('octopush-gitlab-token');
+      const remember = document.getElementById('rememberGitlabToken')?.checked || false;
+
+      if (remember) {
+        localStorage.setItem(GITLAB_TOKEN_REMEMBER_KEY, '1');
+        if (token) localStorage.setItem(GITLAB_TOKEN_LOCAL_KEY, token);
+        else localStorage.removeItem(GITLAB_TOKEN_LOCAL_KEY);
+        sessionStorage.removeItem(GITLAB_TOKEN_SESSION_KEY);
+        return;
+      }
+
+      localStorage.removeItem(GITLAB_TOKEN_REMEMBER_KEY);
+      localStorage.removeItem(GITLAB_TOKEN_LOCAL_KEY);
+      if (token) sessionStorage.setItem(GITLAB_TOKEN_SESSION_KEY, token);
+      else sessionStorage.removeItem(GITLAB_TOKEN_SESSION_KEY);
     }
 
     function restoreGitlabToken() {
       const input = document.getElementById('gitlabTokenInput');
-      if (input) input.value = sessionStorage.getItem('octopush-gitlab-token') || '';
+      const checkbox = document.getElementById('rememberGitlabToken');
+      const remembered = localStorage.getItem(GITLAB_TOKEN_REMEMBER_KEY) === '1';
+      const localToken = localStorage.getItem(GITLAB_TOKEN_LOCAL_KEY) || '';
+      const sessionToken = sessionStorage.getItem(GITLAB_TOKEN_SESSION_KEY) || '';
+
+      if (checkbox) checkbox.checked = remembered && !!localToken;
+      if (input) input.value = remembered && localToken ? localToken : sessionToken;
+    }
+
+    function clearGitlabToken() {
+      sessionStorage.removeItem(GITLAB_TOKEN_SESSION_KEY);
+      localStorage.removeItem(GITLAB_TOKEN_LOCAL_KEY);
+      localStorage.removeItem(GITLAB_TOKEN_REMEMBER_KEY);
+      const input = document.getElementById('gitlabTokenInput');
+      const checkbox = document.getElementById('rememberGitlabToken');
+      if (input) input.value = '';
+      if (checkbox) checkbox.checked = false;
+      showToast('已清除 GitLab token');
     }
 
     async function submitGitlabIssue() {
