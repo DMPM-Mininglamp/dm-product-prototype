@@ -1,0 +1,1772 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OctoPush Prototype v0.1.0</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --primary: #7171EE;
+  --primary-hover: #5f5fd0;
+  --primary-10: rgba(113,113,238,0.1);
+  --primary-20: rgba(113,113,238,0.2);
+  --page-bg: #F4F4F5;
+  --card-bg: #FFFFFF;
+  --t1: rgba(0,0,0,0.75);
+  --t2: rgba(0,0,0,0.45);
+  --t3: rgba(0,0,0,0.40);
+  --t4: rgba(0,0,0,0.35);
+  --t5: rgba(0,0,0,0.20);
+  --td: rgba(0,0,0,0.85);
+  --border: rgba(0,0,0,0.08);
+  --border2: #E5E7EB;
+  --green: #22c55e;
+  --yellow: #f59e0b;
+  --red: #ef4444;
+  --r: 10px;
+  --r-sm: 6px;
+  --r-lg: 12px;
+  --r-xl: 16px;
+  --font: 'Inter', 'Noto Sans SC', ui-sans-serif, -apple-system, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+html, body { height: 100%; }
+body { font-family: var(--font); font-size: 14px; line-height: 1.6; color: var(--t1); background: var(--page-bg); -webkit-font-smoothing: antialiased; overflow: hidden; }
+::selection { background: var(--primary-20); }
+input { font-family: var(--font); }
+button { font-family: var(--font); cursor: pointer; border: none; background: none; }
+a { text-decoration: none; color: inherit; }
+
+/* ===== Scrollbar ===== */
+::-webkit-scrollbar { width: 6px; background: transparent; }
+::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 6px; }
+
+/* ===== PAGES ===== */
+.page { display: none; width: 100%; height: 100%; }
+.page.active { display: flex; }
+
+/* ===== LOGIN PAGE ===== */
+#login-page { flex-direction: row; }
+.login-bg {
+  flex: 1; position: relative; overflow: hidden;
+  background: linear-gradient(135deg, #6B5CE7 0%, #8B7CF6 30%, #7171EE 60%, #5B5BD6 100%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+}
+.login-bg-brand { position: absolute; top: 24px; left: 20px; display: flex; align-items: center; gap: 6px; }
+.login-bg-brand .logo-box {
+  width: 24px; height: 24px; border-radius: 6px;
+  background: linear-gradient(135deg, #8989FF, #6161EE);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: #fff;
+}
+.login-bg-brand span { font-size: 18px; font-weight: 700; color: rgba(0,0,0,0.75); }
+.login-bg .slogan { font-size: 40px; font-weight: 600; color: #fff; text-align: center; line-height: 56px; }
+.login-bg .tags { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 4px; }
+.login-bg .tags span {
+  font-size: 14px; font-weight: 600; color: #fff; padding: 4px 14px;
+  border-radius: 100px; background: rgba(0,0,0,0.5); white-space: nowrap;
+}
+.login-right { width: 464px; display: flex; flex-direction: column; background: #fff; }
+.login-right .drag-bar { height: 40px; flex-shrink: 0; }
+.login-form-wrap { flex: 1; display: flex; align-items: center; justify-content: center; padding: 0 56px; }
+.login-form { width: 352px; }
+.login-form h1 { font-size: 28px; font-weight: 600; color: rgba(0,0,0,0.75); margin-bottom: 40px; }
+.input-group { position: relative; margin-bottom: 16px; }
+.input-group .icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--t3); }
+.input-group input {
+  width: 100%; height: 48px; border: 1px solid var(--border2); border-radius: var(--r);
+  padding: 0 40px 0 40px; font-size: 14px; color: var(--t1); outline: none; transition: border-color 0.2s;
+  background: #fff;
+}
+.input-group input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-20); }
+.input-group input::placeholder { color: var(--t3); }
+.input-group .suffix { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--t3); cursor: pointer; }
+.agreement { font-size: 12px; color: var(--t2); text-align: center; margin-bottom: 16px; }
+.agreement a { color: var(--primary); }
+.btn-login {
+  width: 100%; height: 48px; border-radius: var(--r); background: var(--primary);
+  color: #fff; font-size: 16px; font-weight: 600; transition: background 0.2s; border: none; cursor: pointer;
+}
+.btn-login:hover { background: var(--primary-hover); }
+.login-links { display: flex; justify-content: space-between; margin-top: 16px; font-size: 13px; }
+.login-links a { color: var(--primary); }
+.login-links .no-account span { color: var(--t2); }
+.login-desc { font-size: 14px; color: var(--t2); margin: -28px 0 28px; line-height: 1.7; }
+.login-note {
+  display: flex; align-items: flex-start; gap: 8px; padding: 12px;
+  border: 1px solid var(--border); border-radius: var(--r); background: rgba(113,113,238,0.05);
+  color: var(--t2); font-size: 12px; line-height: 1.6; margin-bottom: 16px;
+}
+.login-note svg { width: 16px; height: 16px; color: var(--primary); flex-shrink: 0; margin-top: 1px; }
+.login-expired {
+  display: none; padding: 10px 12px; border-radius: var(--r-sm); margin-bottom: 16px;
+  background: rgba(239,68,68,0.08); color: #dc2626; font-size: 12px;
+}
+.login-expired.show { display: block; }
+
+/* ===== AUTH / TEAM FLOW ===== */
+.auth-page { flex-direction: column; background: #fff; }
+.auth-body {
+  flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center;
+  background: #f7f7f8; padding: 44px 60px;
+}
+.auth-card {
+  width: min(760px, 100%); border: 1px solid var(--border); border-radius: var(--r-xl);
+  background: #fff; padding: 28px; box-shadow: 0 12px 32px rgba(0,0,0,0.06);
+}
+.auth-card.narrow { width: min(520px, 100%); }
+.auth-card.wide { width: min(940px, 100%); }
+.auth-brand { display: flex; align-items: center; gap: 8px; margin-bottom: 24px; }
+.auth-brand .logo-box {
+  width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(135deg, #8989FF, #6161EE);
+  display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; font-weight: 700;
+}
+.auth-brand span { font-size: 18px; font-weight: 700; color: var(--td); }
+.auth-icon {
+  width: 48px; height: 48px; border-radius: 14px; background: var(--primary-10);
+  display: flex; align-items: center; justify-content: center; color: var(--primary); margin-bottom: 18px;
+}
+.auth-icon svg { width: 24px; height: 24px; }
+.auth-icon.warn { background: rgba(245,158,11,0.12); color: #d97706; }
+.auth-icon.error { background: rgba(239,68,68,0.1); color: #dc2626; }
+.auth-icon.success { background: rgba(34,197,94,0.12); color: #16a34a; }
+.auth-title { font-size: 24px; font-weight: 600; color: var(--td); margin-bottom: 8px; }
+.auth-sub { font-size: 14px; color: var(--t2); line-height: 1.7; margin-bottom: 24px; }
+.auth-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.auth-actions.right { justify-content: flex-end; }
+.btn-auth-primary, .btn-auth-secondary, .btn-auth-ghost {
+  height: 40px; padding: 0 18px; border-radius: var(--r); font-size: 14px; font-weight: 500;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.15s;
+}
+.btn-auth-primary { background: var(--primary); color: #fff; }
+.btn-auth-primary:hover { background: var(--primary-hover); }
+.btn-auth-secondary { background: rgba(113,113,238,0.1); color: var(--primary); }
+.btn-auth-secondary:hover { background: rgba(113,113,238,0.16); }
+.btn-auth-ghost { background: #fff; border: 1px solid var(--border2); color: var(--t1); }
+.btn-auth-ghost:hover { background: var(--page-bg); }
+.btn-auth-primary svg, .btn-auth-secondary svg, .btn-auth-ghost svg { width: 16px; height: 16px; }
+.auth-step-list { border: 1px solid var(--border); border-radius: var(--r-xl); overflow: hidden; margin-bottom: 24px; }
+.auth-step {
+  display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: #fff; font-size: 13px; color: var(--t1);
+}
+.auth-step:not(:last-child) { border-bottom: 1px solid rgba(0,0,0,0.06); }
+.auth-step .dot {
+  width: 18px; height: 18px; border-radius: 50%; background: var(--primary-10);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.auth-step .dot::after { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--primary); }
+.auth-step.pending .dot::after { background: var(--t5); }
+.auth-step.done .dot::after { background: var(--green); }
+.auth-step .meta { margin-left: auto; font-size: 12px; color: var(--t3); }
+.auth-grid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; align-items: start; }
+.auth-section-title { font-size: 13px; font-weight: 600; color: var(--t1); margin-bottom: 10px; }
+.account-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--r); background: #fafafa; margin-bottom: 16px;
+}
+.account-row .email { font-size: 13px; color: var(--t1); }
+.account-row button { color: var(--primary); font-size: 12px; }
+.team-list { display: flex; flex-direction: column; gap: 10px; }
+.team-card {
+  display: flex; align-items: center; gap: 12px; border: 1px solid var(--border); border-radius: var(--r-xl);
+  background: #fff; padding: 14px; cursor: pointer; transition: all 0.15s;
+}
+.team-card:hover { border-color: rgba(113,113,238,0.35); background: rgba(113,113,238,0.02); }
+.team-card.selected { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-10); }
+.team-avatar {
+  width: 36px; height: 36px; border-radius: 10px; background: var(--primary-10); color: var(--primary);
+  display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0;
+}
+.team-info { flex: 1; min-width: 0; }
+.team-info .name { font-size: 14px; font-weight: 600; color: var(--td); }
+.team-info .sub { font-size: 12px; color: var(--t3); margin-top: 1px; }
+.team-check { width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--border2); flex-shrink: 0; }
+.team-card.selected .team-check { border-color: var(--primary); background: var(--primary); box-shadow: inset 0 0 0 4px #fff; }
+.join-panel {
+  border: 1px solid var(--border); border-radius: var(--r-xl); background: #fafafa; padding: 16px;
+}
+.join-panel .join-desc { font-size: 12px; color: var(--t3); line-height: 1.6; margin-bottom: 12px; }
+.join-input-wrap { position: relative; margin-bottom: 10px; }
+.join-input-wrap svg {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  width: 16px; height: 16px; color: var(--t3);
+}
+.join-input {
+  width: 100%; height: 40px; border: 1px solid var(--border2); border-radius: var(--r);
+  padding: 0 12px 0 36px; font-size: 13px; color: var(--t1); outline: none; background: #fff;
+}
+.join-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-20); }
+.join-feedback { display: none; font-size: 12px; color: #dc2626; line-height: 1.5; margin-top: 8px; }
+.join-feedback.show { display: block; }
+.empty-visual {
+  display: flex; align-items: center; justify-content: center; width: 88px; height: 88px; border-radius: 24px;
+  background: linear-gradient(135deg, rgba(113,113,238,0.1), rgba(34,197,94,0.08)); color: var(--primary); margin-bottom: 18px;
+}
+.empty-visual svg { width: 44px; height: 44px; }
+.assistant-box {
+  display: flex; align-items: center; gap: 16px; border: 1px solid var(--border); border-radius: var(--r-xl);
+  background: #fff; padding: 14px; margin-top: 16px;
+}
+.qr-mini {
+  width: 92px; height: 92px; border-radius: 8px; border: 1px solid var(--border2); background:
+    linear-gradient(90deg, #111 10px, transparent 10px) 10px 10px/24px 24px,
+    linear-gradient(#111 10px, transparent 10px) 10px 10px/24px 24px,
+    #fff;
+  flex-shrink: 0;
+}
+.assistant-copy .title { font-size: 13px; font-weight: 600; color: var(--t1); margin-bottom: 4px; }
+.assistant-copy .desc { font-size: 12px; color: var(--t3); line-height: 1.6; }
+.relay-code {
+  display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border-radius: var(--r-sm);
+  background: var(--primary-10); color: var(--primary); font-family: var(--mono); font-size: 13px; margin: 4px 0 16px;
+}
+.invite-summary {
+  border: 1px solid var(--border); border-radius: var(--r-xl); background: #fafafa; padding: 16px; margin-bottom: 16px;
+}
+.invite-summary .row { display: flex; justify-content: space-between; gap: 16px; padding: 8px 0; font-size: 13px; }
+.invite-summary .row:not(:last-child) { border-bottom: 1px solid rgba(0,0,0,0.06); }
+.invite-summary .label { color: var(--t3); }
+.invite-summary .value { color: var(--t1); font-weight: 500; text-align: right; }
+.flow-view { padding: 32px 60px; background: #fff; overflow-y: auto; }
+.flow-layout { max-width: 920px; display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 20px; align-items: start; }
+.flow-main-card {
+  border: 1px solid var(--border); border-radius: var(--r-xl); background: #fff;
+  padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.flow-side-card {
+  border: 1px solid var(--border); border-radius: var(--r-xl); background: #fafafa;
+  padding: 16px;
+}
+.flow-kicker { font-size: 12px; color: var(--primary); font-weight: 600; margin-bottom: 8px; }
+.flow-title { font-size: 20px; font-weight: 600; color: var(--td); margin-bottom: 6px; }
+.flow-sub { font-size: 13px; color: var(--t2); line-height: 1.7; margin-bottom: 20px; }
+.flow-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+.flow-account {
+  display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: var(--r);
+  background: #fff; border: 1px solid var(--border); margin-bottom: 12px;
+}
+.flow-account .avatar {
+  width: 32px; height: 32px; border-radius: 8px; background: var(--primary-10); color: var(--primary);
+  display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px;
+}
+.flow-account .name { font-size: 13px; color: var(--td); font-weight: 500; }
+.flow-account .email { font-size: 12px; color: var(--t3); }
+.flow-meta-list { display: flex; flex-direction: column; gap: 8px; }
+.flow-meta-item { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; color: var(--t3); }
+.flow-meta-item strong { color: var(--t1); font-weight: 500; text-align: right; }
+.flow-view .auth-step-list { margin-bottom: 0; }
+.flow-view .join-panel { background: #fff; margin-top: 16px; }
+@media (max-width: 960px) {
+  .flow-view { padding: 24px; }
+  .flow-layout { grid-template-columns: 1fr; }
+}
+.prototype-sync-controls { display: none; }
+@media (max-width: 860px) {
+  .auth-body { padding: 28px 20px 76px; align-items: flex-start; }
+  .auth-grid { grid-template-columns: 1fr; }
+  .login-bg { display: none; }
+  .login-right { width: 100%; }
+}
+
+/* ===== MAIN LAYOUT ===== */
+#main-page { flex-direction: column; background: #fff; }
+.title-bar {
+  height: 40px; flex-shrink: 0; display: flex; align-items: center; padding: 0 16px;
+  border-bottom: 1px solid var(--border); background: #fff; -webkit-app-region: drag;
+}
+.traffic-lights { display: flex; gap: 8px; }
+.traffic-lights span { width: 12px; height: 12px; border-radius: 50%; }
+.tl-red { background: #FF5F57; }
+.tl-yellow { background: #FFBD2E; }
+.tl-green { background: #28C840; }
+.main-body { flex: 1; display: flex; min-height: 0; }
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+  width: 240px; flex-shrink: 0; background: var(--page-bg); display: flex; flex-direction: column;
+  transition: width 0.2s ease; overflow: hidden;
+}
+.sidebar.collapsed { width: 56px; }
+.sidebar-header { padding: 12px 8px; display: flex; align-items: center; height: 56px; }
+.sidebar-header .logo-wrap { display: flex; align-items: center; gap: 8px; padding: 0 4px; flex: 1; min-width: 0; }
+.sidebar-header .logo-icon {
+  width: 24px; height: 24px; border-radius: 6px; flex-shrink: 0;
+  background: linear-gradient(135deg, #8989FF, #6161EE);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: #fff;
+}
+.sidebar-header .logo-text { font-size: 18px; font-weight: 700; color: rgba(0,0,0,0.75); white-space: nowrap; }
+.sidebar.collapsed .logo-text { display: none; }
+.sidebar-toggle {
+  width: 32px; height: 32px; border-radius: var(--r-sm); display: flex; align-items: center; justify-content: center;
+  color: var(--t3); transition: background 0.15s; flex-shrink: 0;
+}
+.sidebar-toggle:hover { background: rgba(0,0,0,0.05); }
+.sidebar.collapsed .sidebar-toggle { margin: 4px auto 0; }
+.sidebar-nav { flex: 1; padding: 4px 16px; }
+.sidebar.collapsed .sidebar-nav { padding: 4px 8px; }
+.nav-item {
+  display: flex; align-items: center; gap: 8px; padding: 8px 8px; border-radius: var(--r-sm);
+  font-size: 14px; font-weight: 500; color: rgba(0,0,0,0.75); transition: all 0.15s; cursor: pointer;
+}
+.nav-item:hover { background: rgba(0,0,0,0.05); }
+.nav-item.active { background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.08); color: #000; }
+.nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+.sidebar.collapsed .nav-item span { display: none; }
+.sidebar.collapsed .nav-item { justify-content: center; padding: 8px; }
+.sidebar-footer { padding: 16px; }
+.sidebar.collapsed .sidebar-footer { padding: 8px; }
+.user-card {
+  display: flex; align-items: center; gap: 8px; padding: 8px; border-radius: var(--r-sm);
+  background: #fff; cursor: pointer; position: relative;
+}
+.user-card:hover { background: #f8f8f8; }
+.user-avatar {
+  width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; overflow: hidden;
+  background: var(--primary-10); display: flex; align-items: center; justify-content: center;
+}
+.user-avatar svg { color: var(--primary); }
+.user-info { flex: 1; min-width: 0; }
+.user-info .name { font-size: 13px; color: var(--t1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sidebar.collapsed .user-info, .sidebar.collapsed .user-chevron { display: none; }
+.user-chevron { color: #212121; flex-shrink: 0; }
+/* User dropdown */
+.user-dropdown {
+  display: none; position: absolute; bottom: 100%; left: 0; margin-bottom: 4px;
+  background: #fff; border-radius: var(--r-lg); box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+  min-width: 150px; padding: 12px 8px; z-index: 100;
+}
+.user-dropdown.open { display: block; }
+.user-dropdown .dd-item {
+  display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: var(--r-sm);
+  font-size: 14px; color: var(--t1); cursor: pointer; transition: background 0.15s;
+}
+.user-dropdown .dd-item:hover { background: var(--page-bg); }
+.user-dropdown .dd-item svg { width: 16px; height: 16px; }
+
+/* ===== CONTENT AREA ===== */
+.content { flex: 1; overflow-y: auto; background: #fff; }
+.view { display: none; height: 100%; }
+.view.active { display: flex; flex-direction: column; }
+
+/* ===== CLAW LIST ===== */
+#claw-list { padding: 32px 60px; }
+#claw-list .page-title { font-size: 18px; font-weight: 600; color: rgba(0,0,0,0.75); margin-bottom: 4px; }
+#claw-list .page-sub { font-size: 13px; color: var(--t2); margin-bottom: 24px; }
+.list-toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+.search-box {
+  flex: 1; position: relative;
+}
+.search-box input {
+  width: 100%; height: 40px; border: 1px solid var(--border2); border-radius: var(--r);
+  padding: 0 12px 0 36px; font-size: 14px; color: var(--t1); outline: none; background: #fff;
+}
+.search-box input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-20); }
+.search-box input::placeholder { color: var(--t3); }
+.search-box .s-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--t3); }
+.btn-create {
+  display: flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 8px;
+  background: var(--primary); color: #fff; font-size: 13px; font-weight: 500;
+  transition: background 0.2s; white-space: nowrap; flex-shrink: 0;
+}
+.btn-create:hover { background: var(--primary-hover); }
+.btn-create svg { width: 14px; height: 14px; }
+.card-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 16px; padding-bottom: 16px;
+}
+
+/* Managed Claw Card */
+.claw-card {
+  display: flex; flex-direction: column; border-radius: var(--r-xl); border: 1px solid var(--border);
+  background: #fff; padding: 16px; gap: 12px; transition: all 0.2s; cursor: pointer;
+}
+.claw-card:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(113,113,238,0.1); }
+.claw-card .card-head { display: flex; align-items: center; gap: 12px; }
+.claw-avatar {
+  width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 600;
+}
+.claw-avatar.purple { background: rgba(113,113,238,0.12); color: var(--primary); }
+.claw-avatar.gray { background: rgba(0,0,0,0.1); color: var(--t3); }
+.claw-avatar.solid-purple { background: var(--primary); color: #fff; }
+.card-name-wrap { flex: 1; min-width: 0; }
+.card-name { font-size: 14px; font-weight: 600; color: var(--td); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card-id { font-size: 12px; color: var(--t3); margin-top: 2px; }
+.status-badge {
+  display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 100px;
+  font-size: 12px; font-weight: 500; flex-shrink: 0;
+}
+.badge-running { background: rgba(113,113,238,0.1); color: var(--primary); border: 1px solid rgba(113,113,238,0.2); }
+.badge-stopped { background: rgba(0,0,0,0.05); color: var(--t3); border: 1px solid rgba(0,0,0,0.1); }
+.badge-starting { background: rgba(245,158,11,0.1); color: #ca8a04; border: 1px solid rgba(245,158,11,0.2); }
+.card-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.metric-box { border-radius: 8px; background: rgba(0,0,0,0.05); padding: 8px; text-align: center; }
+.metric-box .m-label { font-size: 11px; color: var(--t3); margin-bottom: 2px; }
+.metric-box .m-value { font-size: 13px; font-weight: 500; color: var(--t1); }
+.card-actions { display: flex; align-items: center; padding-top: 4px; }
+.card-actions .more-btn {
+  width: 32px; height: 32px; border-radius: var(--r-sm); display: flex; align-items: center; justify-content: center;
+  color: var(--t3); transition: background 0.15s;
+}
+.card-actions .more-btn:hover { background: var(--page-bg); }
+.card-actions .right-btns { margin-left: auto; display: flex; gap: 8px; }
+.btn-outline-sm {
+  height: 32px; padding: 0 12px; border-radius: var(--r-sm); font-size: 12px; font-weight: 500;
+  border: 1px solid var(--border2); background: #fff; color: var(--t1); transition: all 0.15s;
+}
+.btn-outline-sm:hover { background: var(--page-bg); }
+.btn-primary-sm {
+  height: 32px; padding: 0 12px; border-radius: var(--r-sm); font-size: 12px; font-weight: 500;
+  background: var(--primary); color: #fff; transition: background 0.15s;
+}
+.btn-primary-sm:hover { background: var(--primary-hover); }
+.btn-primary-sm:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Unmanaged Card */
+.unmanaged-card {
+  display: flex; flex-direction: column; border-radius: var(--r-xl); border: 1px solid var(--border);
+  background: rgba(0,0,0,0.02); padding: 16px; gap: 12px;
+}
+.unmanaged-card .card-head { display: flex; align-items: flex-start; gap: 12px; }
+.unmanaged-card .desc { font-size: 12px; color: var(--t2); line-height: 1.6; }
+.btn-full-purple {
+  height: 32px; width: 100%; border-radius: var(--r-sm); font-size: 12px; font-weight: 500;
+  background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; gap: 6px;
+  transition: background 0.15s;
+}
+.btn-full-purple:hover { background: var(--primary-hover); }
+
+/* Create Card */
+.create-card {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  border-radius: var(--r-xl); border: 2px dashed rgba(0,0,0,0.15); min-height: 180px;
+  gap: 8px; transition: all 0.2s; cursor: pointer;
+}
+.create-card:hover { border-color: rgba(113,113,238,0.5); background: rgba(113,113,238,0.02); }
+.create-card .cc-icon {
+  width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.06);
+  display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+}
+.create-card:hover .cc-icon { background: var(--primary-10); }
+.create-card .cc-icon svg { color: var(--t3); transition: color 0.2s; }
+.create-card:hover .cc-icon svg { color: var(--primary); }
+.create-card .cc-title { font-size: 13px; font-weight: 500; color: rgba(0,0,0,0.5); transition: color 0.2s; }
+.create-card:hover .cc-title { color: var(--primary); }
+.create-card .cc-sub { font-size: 11px; color: var(--t4); transition: color 0.2s; }
+.create-card:hover .cc-sub { color: rgba(113,113,238,0.6); }
+
+/* ===== CLAW DETAIL ===== */
+#claw-detail { background: #f7f6f3; }
+.detail-header { background: #fff; border-bottom: 1px solid var(--border); padding: 16px 32px 0; }
+.detail-back { display: flex; align-items: center; gap: 4px; font-size: 14px; color: rgba(0,0,0,0.55); font-weight: 500; cursor: pointer; margin-bottom: 12px; transition: color 0.15s; }
+.detail-back:hover { color: rgba(0,0,0,0.8); }
+.detail-back svg { width: 18px; height: 18px; }
+.detail-title-row { display: flex; align-items: center; gap: 12px; padding-bottom: 16px; }
+.detail-info { flex: 1; min-width: 0; }
+.detail-info h1 { font-size: 18px; font-weight: 600; color: var(--td); }
+.detail-meta { display: flex; align-items: center; gap: 8px; margin-top: 2px; font-size: 12px; color: var(--t3); }
+.detail-meta .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+.detail-meta .sep { color: var(--t5); }
+.detail-btns { display: flex; gap: 8px; flex-shrink: 0; }
+.btn-detail {
+  height: 32px; padding: 0 12px; border-radius: var(--r-sm); font-size: 12px; font-weight: 500;
+  display: flex; align-items: center; gap: 6px; transition: all 0.15s;
+}
+.btn-detail.purple { background: var(--primary); color: #fff; }
+.btn-detail.purple:hover { background: var(--primary-hover); }
+.btn-detail.outline-red { background: #fff; color: #ef4444; border: 1px solid var(--border2); }
+.btn-detail svg { width: 14px; height: 14px; }
+
+/* Tabs */
+.detail-tabs { display: flex; background: #fff; border-bottom: 1px solid var(--border); padding: 0 32px; }
+.tab-btn {
+  padding: 12px 16px; font-size: 13px; font-weight: 500; color: var(--t3);
+  border-bottom: 2px solid transparent; transition: all 0.15s; cursor: pointer;
+}
+.tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+.tab-btn:hover { color: var(--primary); }
+.tab-content { display: none; flex: 1; overflow-y: auto; padding: 32px; background: #fff; }
+.tab-content.active { display: block; }
+
+/* Config Card */
+.config-card { border-radius: var(--r-xl); border: 1px solid var(--border); background: #fff; padding: 24px; margin-bottom: 16px; }
+.config-card .cc-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.config-card .cc-head h2 { font-size: 14px; font-weight: 600; color: rgba(0,0,0,0.8); }
+.config-card .cc-head .link { font-size: 12px; color: var(--t3); display: flex; align-items: center; gap: 4px; cursor: pointer; transition: color 0.15s; }
+.config-card .cc-head .link:hover { color: var(--primary); }
+.config-card .cc-head .link svg { width: 12px; height: 12px; }
+.config-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 24px; }
+.config-item { display: flex; align-items: center; gap: 12px; }
+.config-item .ci-icon {
+  width: 32px; height: 32px; border-radius: 8px; background: rgba(0,0,0,0.04); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.config-item .ci-icon svg { width: 16px; height: 16px; color: var(--t3); }
+.config-item .ci-label { font-size: 11px; color: var(--t3); margin-bottom: 2px; }
+.config-item .ci-value { font-size: 13px; font-weight: 500; color: var(--t1); }
+.config-card .cc-footer { display: flex; justify-content: flex-end; }
+.btn-purple-md {
+  height: 36px; padding: 0 24px; border-radius: var(--r-sm); font-size: 13px; font-weight: 500;
+  background: var(--primary); color: #fff; transition: background 0.15s;
+}
+.btn-purple-md:hover { background: var(--primary-hover); }
+
+/* Health Card */
+.health-card { border-radius: var(--r-xl); border: 1px solid var(--border); background: #fff; padding: 24px; }
+.health-head { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.health-head h2 { font-size: 14px; font-weight: 600; color: rgba(0,0,0,0.8); }
+.recheck-btn {
+  display: flex; align-items: center; gap: 6px; border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 100px; padding: 4px 12px; font-size: 12px; color: var(--primary);
+  transition: border-color 0.15s;
+}
+.recheck-btn:hover { border-color: rgba(113,113,238,0.4); }
+.recheck-btn svg { width: 12px; height: 12px; }
+.health-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+.health-chip {
+  display: flex; align-items: center; gap: 8px; border: 1px solid var(--border); border-radius: 8px;
+  background: rgba(0,0,0,0.02); padding: 10px 12px; min-width: 160px;
+}
+.health-chip .hc-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.health-chip .hc-label { font-size: 13px; color: rgba(0,0,0,0.65); }
+.health-chip .hc-value { margin-left: auto; font-size: 12px; color: var(--t3); }
+.fix-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.fix-card {
+  border: 1px solid var(--border); border-radius: var(--r-xl); padding: 16px;
+  display: flex; align-items: center; gap: 16px;
+}
+.fix-card .fc-icon { flex-shrink: 0; color: rgba(0,0,0,0.3); }
+.fix-card .fc-icon svg { width: 20px; height: 20px; }
+.fix-card .fc-info { flex: 1; min-width: 0; }
+.fix-card .fc-info .fc-title { font-size: 13px; font-weight: 500; color: var(--t1); margin-bottom: 4px; }
+.fix-card .fc-info .fc-desc { font-size: 12px; color: var(--t3); line-height: 1.6; }
+.btn-fix-outline {
+  height: 36px; padding: 0 20px; border-radius: var(--r-sm); font-size: 13px;
+  background: rgba(113,113,238,0.08); color: var(--primary); flex-shrink: 0; transition: background 0.15s;
+}
+.btn-fix-outline:hover { background: rgba(113,113,238,0.15); }
+.btn-fix-purple {
+  height: 36px; padding: 0 20px; border-radius: var(--r-sm); font-size: 13px;
+  background: var(--primary); color: #fff; flex-shrink: 0; transition: background 0.15s;
+}
+.btn-fix-purple:hover { background: var(--primary-hover); }
+
+/* Logs Tab */
+.logs-toolbar { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-bottom: 12px; }
+.log-type-btn {
+  display: flex; align-items: center; gap: 6px; border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 8px; padding: 8px 12px; font-size: 13px; color: rgba(0,0,0,0.65);
+  background: #fff; transition: border-color 0.15s;
+}
+.log-type-btn:hover { border-color: rgba(0,0,0,0.2); }
+.log-type-btn svg { width: 14px; height: 14px; color: var(--t3); }
+.btn-export {
+  height: 36px; padding: 0 16px; border-radius: var(--r-sm); font-size: 13px; font-weight: 500;
+  background: var(--primary); color: #fff; display: flex; align-items: center; gap: 6px;
+  transition: background 0.15s;
+}
+.btn-export:hover { background: var(--primary-hover); }
+.btn-export svg { width: 14px; height: 14px; }
+.logs-area {
+  border: 1px solid var(--border); border-radius: var(--r-xl); background: #fff;
+  padding: 20px; flex: 1; overflow-y: auto;
+}
+.logs-area .logs-title { font-size: 13px; font-weight: 500; color: rgba(0,0,0,0.5); margin-bottom: 12px; }
+.log-entry { display: flex; align-items: flex-start; gap: 8px; font-family: var(--mono); font-size: 12.5px; line-height: 1.6; margin-bottom: 4px; }
+.log-entry .le-time { color: var(--t4); flex-shrink: 0; }
+.log-entry .le-prefix { flex-shrink: 0; }
+.log-entry.success .le-prefix, .log-entry.success .le-msg { color: #16a34a; }
+.log-entry.info .le-msg { color: rgba(0,0,0,0.6); }
+.log-entry.warn .le-prefix, .log-entry.warn .le-msg { color: #d97706; }
+.log-entry.error .le-prefix, .log-entry.error .le-msg { color: #dc2626; }
+
+/* ===== CREATE CLAW ===== */
+#create-claw { padding: 0; }
+.create-header { display: flex; align-items: center; padding: 32px 60px 24px; position: relative; }
+.create-back { position: absolute; left: 60px; display: flex; align-items: center; gap: 4px; font-size: 14px; color: rgba(0,0,0,0.55); font-weight: 500; cursor: pointer; }
+.create-back:hover { color: rgba(0,0,0,0.8); }
+.create-back svg { width: 18px; height: 18px; }
+.create-header h1 { font-size: 18px; font-weight: 600; color: rgba(0,0,0,0.8); margin: 0 auto; }
+
+/* Step Bar */
+.step-bar { display: flex; align-items: center; padding: 0 60px; margin-bottom: 32px; }
+.step-item { display: flex; align-items: center; gap: 8px; }
+.step-circle {
+  width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 600; color: #fff;
+}
+.step-circle.active { background: #22c55e; }
+.step-circle.default { background: var(--primary); }
+.step-label { font-size: 13px; font-weight: 600; }
+.step-label.active { color: #22c55e; }
+.step-label.default { color: var(--primary); }
+.step-sep { margin: 0 12px; font-size: 13px; letter-spacing: 3px; color: var(--t5); user-select: none; }
+.step-content { flex: 1; overflow-y: auto; padding: 0 60px 32px; }
+.step-view { display: none; }
+.step-view.active { display: block; }
+
+/* Step 1 */
+.summary-card { border: 1px solid var(--border); border-radius: var(--r-xl); background: #fafafa; padding: 20px; margin-bottom: 20px; }
+.summary-card .sc-title { font-size: 13px; font-weight: 600; color: rgba(0,0,0,0.65); margin-bottom: 16px; }
+.summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.summary-item .si-label { display: flex; align-items: center; gap: 6px; color: var(--t4); font-size: 11px; margin-bottom: 6px; }
+.summary-item .si-label svg { width: 14px; height: 14px; }
+.summary-item .si-value { font-size: 13px; font-weight: 500; color: var(--t1); }
+.env-section .env-title { font-size: 13px; font-weight: 600; color: rgba(0,0,0,0.65); margin-bottom: 12px; }
+.env-list { border: 1px solid var(--border); border-radius: var(--r-xl); overflow: hidden; }
+.env-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; font-size: 13px; background: #fff; }
+.env-item:not(:last-child) { border-bottom: 1px solid rgba(0,0,0,0.06); }
+.env-item .ei-name { color: rgba(0,0,0,0.7); width: 144px; flex-shrink: 0; }
+.env-item .ei-status { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+.env-item .ei-status.passed { color: var(--primary); }
+.env-item .ei-status svg { width: 16px; height: 16px; }
+.step-footer { display: flex; justify-content: space-between; padding-top: 16px; }
+.btn-step-outline {
+  height: 40px; padding: 0 32px; border-radius: var(--r); font-size: 14px; font-weight: 500;
+  background: rgba(113,113,238,0.1); color: var(--primary); transition: background 0.15s;
+}
+.btn-step-outline:hover { background: rgba(113,113,238,0.15); }
+.btn-step-primary {
+  height: 40px; padding: 0 32px; border-radius: var(--r); font-size: 14px; font-weight: 500;
+  background: var(--primary); color: #fff; transition: background 0.15s;
+}
+.btn-step-primary:hover { background: var(--primary-hover); }
+.btn-step-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Step 2 */
+.form-group { margin-bottom: 24px; }
+.form-group .fg-label { display: flex; align-items: center; gap: 4px; margin-bottom: 8px; }
+.form-group .fg-label label { font-size: 13px; font-weight: 500; color: rgba(0,0,0,0.7); }
+.form-group .fg-label svg { width: 14px; height: 14px; color: var(--t4); }
+.form-group input, .form-group select {
+  width: 100%; height: 40px; border: 1px solid var(--border2); border-radius: var(--r);
+  padding: 0 12px; font-size: 14px; color: var(--t1); outline: none; background: #fff;
+}
+.form-group input:focus, .form-group select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-20); }
+.space-model-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+/* Step 3 */
+.progress-card { border: 1px solid var(--border); border-radius: 16px; background: #fff; padding: 24px; margin-bottom: 16px; }
+.progress-card .pc-row { display: flex; align-items: center; gap: 20px; }
+.pc-logo { width: 56px; height: 56px; border-radius: 16px; background: var(--primary-10); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.pc-logo span { font-size: 20px; font-weight: 700; color: var(--primary); }
+.pc-info { flex: 1; }
+.pc-info .pc-title { font-size: 15px; font-weight: 600; color: rgba(0,0,0,0.8); }
+.pc-info .pc-sub { font-size: 13px; color: var(--t2); margin-top: 2px; }
+.pc-percent { font-size: 40px; font-weight: 700; color: var(--primary); line-height: 1; }
+.progress-bar { height: 8px; background: #e5e7eb; border-radius: 4px; margin-top: 20px; overflow: hidden; }
+.progress-bar .fill { height: 100%; background: var(--primary); border-radius: 4px; transition: width 0.5s ease; }
+.install-steps { border: 1px solid var(--border); border-radius: var(--r-xl); overflow: hidden; }
+.install-step { display: flex; align-items: center; gap: 16px; padding: 16px 20px; background: #fff; }
+.install-step:not(:last-child) { border-bottom: 1px solid rgba(0,0,0,0.06); }
+.install-step.active-step { background: rgba(113,113,238,0.03); }
+.install-step .is-icon { flex-shrink: 0; }
+.install-step .is-icon svg { width: 20px; height: 20px; }
+.install-step .is-icon.done svg { color: #22c55e; }
+.install-step .is-icon.progress svg { color: var(--primary); animation: spin 1s linear infinite; }
+.install-step .is-icon.waiting svg { color: rgba(0,0,0,0.15); }
+.install-step .is-info .is-title { font-size: 13px; font-weight: 500; color: var(--t1); }
+.install-step .is-info .is-title.waiting { color: var(--t4); }
+.install-step .is-info .is-desc { font-size: 11px; color: var(--t4); margin-top: 2px; }
+@keyframes spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+
+/* Step 4 */
+.perm-title { font-size: 15px; font-weight: 600; color: rgba(0,0,0,0.8); margin-bottom: 4px; }
+.perm-desc { font-size: 13px; color: var(--t2); margin-bottom: 24px; }
+.perm-list { display: flex; flex-direction: column; gap: 8px; }
+.perm-item {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  border: 1px solid var(--border); border-radius: var(--r-xl); background: #fff; padding: 14px 16px;
+}
+.perm-item .pi-name { font-size: 13px; font-weight: 500; color: var(--t1); }
+.perm-item .pi-check svg { width: 20px; height: 20px; color: var(--primary); }
+.btn-auth-sm {
+  height: 28px; padding: 0 12px; border-radius: var(--r-sm); font-size: 12px;
+  background: var(--primary); color: #fff; display: flex; align-items: center; gap: 4px;
+  transition: background 0.15s; flex-shrink: 0;
+}
+.btn-auth-sm:hover { background: var(--primary-hover); }
+.btn-auth-sm svg { width: 12px; height: 12px; }
+
+/* ===== CONFIGURE CLAW PAGE ===== */
+#configure-claw { padding: 32px 60px; }
+#configure-claw .cfg-back { display: flex; align-items: center; gap: 4px; font-size: 14px; color: rgba(0,0,0,0.55); font-weight: 500; cursor: pointer; margin-bottom: 24px; transition: color 0.15s; }
+#configure-claw .cfg-back:hover { color: rgba(0,0,0,0.8); }
+#configure-claw .cfg-back svg { width: 18px; height: 18px; }
+#configure-claw h1 { font-size: 18px; font-weight: 600; color: rgba(0,0,0,0.75); margin-bottom: 24px; }
+.cfg-form { display: flex; flex-direction: column; gap: 20px; }
+.cfg-form .cfg-group { display: flex; flex-direction: column; gap: 6px; }
+.cfg-form .cfg-group label { font-size: 13px; font-weight: 500; color: rgba(0,0,0,0.7); }
+.cfg-form .cfg-group label .req { color: #ef4444; margin-right: 2px; }
+.cfg-form .cfg-group input, .cfg-form .cfg-group select {
+  width: 100%; height: 40px; border: 1px solid var(--border2); border-radius: var(--r);
+  padding: 0 12px; font-size: 14px; color: var(--t1); outline: none; background: #fff;
+}
+.cfg-form .cfg-group input:focus, .cfg-form .cfg-group select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-20); }
+.cfg-form .cfg-group input[readonly] { background: #fff; color: var(--t3); cursor: not-allowed; }
+.cfg-space-card {
+  border: 1px solid var(--border); border-radius: var(--r-xl); background: #fafafa; padding: 16px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+.cfg-space-card .cfg-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.cfg-space-card .cfg-group label { font-size: 12px; color: rgba(0,0,0,0.5); }
+.cfg-model-info { display: flex; align-items: center; gap: 4px; }
+.cfg-model-info svg { width: 12px; height: 12px; color: rgba(0,0,0,0.25); }
+.cfg-footer { display: flex; justify-content: flex-end; gap: 8px; padding-top: 8px; }
+.btn-cfg-cancel {
+  height: 36px; padding: 0 20px; border-radius: var(--r-sm); font-size: 14px;
+  background: #EDEDFB; color: var(--primary); transition: background 0.15s;
+}
+.btn-cfg-cancel:hover { background: #e0e0f7; }
+.btn-cfg-confirm {
+  height: 36px; padding: 0 20px; border-radius: var(--r-sm); font-size: 14px;
+  background: var(--primary); color: #fff; transition: background 0.15s;
+}
+.btn-cfg-confirm:hover { background: var(--primary-hover); }
+
+/* ===== CONTACT US MODAL ===== */
+.contact-modal .modal-box { padding: 0; min-height: auto; overflow: hidden; }
+.contact-header {
+  background: var(--primary); height: 72px; display: flex; align-items: center; justify-content: center; position: relative;
+}
+.contact-header h2 { color: #fff; font-size: 18px; font-weight: 600; }
+.contact-header .close-btn { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: #eee; cursor: pointer; transition: color 0.15s; }
+.contact-header .close-btn:hover { color: #fff; }
+.contact-header .close-btn svg { width: 18px; height: 18px; }
+.contact-body { padding: 24px 36px; display: flex; flex-direction: column; align-items: center; }
+.contact-body .contact-text { font-size: 14px; color: rgba(0,0,0,0.75); text-align: left; width: 100%; }
+.contact-body .qr-placeholder {
+  width: 240px; height: 240px; margin-top: 24px; border-radius: 8px;
+  background: #f5f5f5; border: 1px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--t3); font-size: 13px; flex-direction: column; gap: 8px;
+}
+.contact-body .qr-placeholder svg { width: 48px; height: 48px; color: var(--t5); }
+
+/* ===== VERSION INFO MODAL ===== */
+.version-modal .modal-box { width: 320px; min-height: auto; padding: 40px 32px 32px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.version-modal .ver-logo {
+  width: 50px; height: 50px; border-radius: 50%; margin-bottom: 16px;
+  background: linear-gradient(135deg, #8989FF, #6161EE);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 700; color: #fff;
+}
+.version-modal .ver-title { font-size: 18px; font-weight: 600; color: var(--td); }
+.version-modal .ver-num { font-size: 13px; color: var(--t2); margin-top: 6px; }
+.version-modal .ver-update {
+  display: flex; align-items: center; gap: 6px; margin-top: 20px;
+  padding: 6px 16px; border-radius: 100px; font-size: 13px;
+  color: var(--primary); background: var(--primary-10); cursor: pointer; transition: opacity 0.15s;
+}
+.version-modal .ver-update:hover { opacity: 0.7; }
+.version-modal .ver-update svg { width: 13px; height: 13px; }
+
+/* ===== MODAL ===== */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1000;
+  align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal-box {
+  width: 400px; min-height: 220px; background: #fff; border-radius: var(--r-xl); padding: 24px;
+  display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.15); position: relative;
+}
+.modal-close { position: absolute; top: 16px; right: 16px; color: var(--t3); cursor: pointer; transition: color 0.15s; }
+.modal-close:hover { color: rgba(0,0,0,0.7); }
+.modal-close svg { width: 16px; height: 16px; }
+.modal-title { font-size: 16px; font-weight: 600; color: rgba(0,0,0,0.75); text-align: center; margin-bottom: 16px; }
+.modal-desc { font-size: 14px; color: rgba(0,0,0,0.75); flex: 1; }
+.modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px; }
+.btn-modal-cancel {
+  height: 36px; padding: 0 20px; border-radius: var(--r-sm); font-size: 14px;
+  background: #EBEBFB; color: var(--primary); transition: background 0.15s;
+}
+.btn-modal-cancel:hover { background: #ddddf7; }
+.btn-modal-confirm {
+  height: 36px; padding: 0 20px; border-radius: var(--r-sm); font-size: 14px;
+  background: var(--primary); color: #fff; transition: background 0.15s;
+}
+.btn-modal-confirm:hover { background: var(--primary-hover); }
+
+/* ===== SVG ICONS (inline) ===== */
+.icon-sm { width: 16px; height: 16px; }
+.icon-md { width: 18px; height: 18px; }
+.icon-lg { width: 20px; height: 20px; }
+</style>
+</head>
+<body>
+
+<div class="prototype-sync-controls" aria-hidden="true">
+  <button data-page="startup" onclick="showPage('startup-page')">启动</button>
+  <button data-page="login" onclick="showPage('login-page')">登录</button>
+  <button data-page="auth-waiting" onclick="showCheckState('auth-waiting')">等待授权</button>
+  <button data-page="restore-last-team" onclick="showCheckState('restore-last-team')">恢复团队</button>
+  <button data-page="team-expired" onclick="showCheckState('team-expired')">团队失效</button>
+  <button data-page="no-team" onclick="showCheckState('no-team')">无团队</button>
+  <button data-page="web-relay" onclick="showPage('web-relay-page')">邀请链接</button>
+  <button data-page="invite-launch" onclick="showCheckState('invite-launch')">客户端邀请加入</button>
+  <button data-page="workspace-prepare" onclick="showCheckState('workspace-prepare')">准备团队工作区</button>
+  <button data-page="workspace-failed" onclick="showCheckState('workspace-failed')">准备失败</button>
+  <button data-page="main-workspace" onclick="showMainWorkspace()">主界面</button>
+  <button data-page="join-team-error" onclick="showJoinError()">加入失败</button>
+</div>
+
+<!-- ==================== STARTUP / AUTH FLOW ==================== -->
+<div id="startup-page" class="page auth-page active" data-page="startup">
+  <div class="title-bar">
+    <div class="traffic-lights"><span class="tl-red"></span><span class="tl-yellow"></span><span class="tl-green"></span></div>
+  </div>
+  <div class="auth-body">
+    <div class="auth-card narrow">
+      <div class="auth-brand"><div class="logo-box">O</div><span>OctoPush</span></div>
+      <div class="auth-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+      </div>
+      <div class="auth-title">正在打开 OctoPush</div>
+      <div class="auth-sub">正在恢复本地登录态和默认团队上下文。有效会话会直接进入团队工作区；没有可进入团队时，需要先加入团队。</div>
+      <div class="auth-step-list">
+        <div class="auth-step done"><span class="dot"></span><span>检查本地登录态</span><span class="meta">已发现</span></div>
+        <div class="auth-step done"><span class="dot"></span><span>校验 Access Token</span><span class="meta">有效</span></div>
+        <div class="auth-step"><span class="dot"></span><span>恢复默认团队上下文</span><span class="meta">OpenClaw 团队</span></div>
+      </div>
+      <div class="auth-actions">
+        <button class="btn-auth-primary" onclick="showCheckState('restore-last-team')">恢复上次团队</button>
+        <button class="btn-auth-secondary" onclick="showPage('login-page')">本地无登录态</button>
+        <button class="btn-auth-ghost" onclick="showCheckState('no-team')">无可进入团队</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== LOGIN PAGE ==================== -->
+<div id="login-page" class="page">
+  <div class="login-bg">
+    <div class="login-bg-brand">
+      <div class="logo-box">O</div>
+      <span>OctoPush</span>
+    </div>
+    <div class="slogan">OctoPush，<br>您身边的AI助手</div>
+    <div class="tags">
+      <span>多平台协作</span>
+      <span>安全可控</span>
+      <span>智能决策</span>
+      <span>实时响应</span>
+      <span>辅助决策</span>
+    </div>
+  </div>
+  <div class="login-right" data-review-id="login-right-panel">
+    <div class="drag-bar" data-review-id="login-drag-bar"></div>
+    <div class="login-form-wrap" data-review-id="login-form-wrap">
+      <div class="login-form" data-review-id="login-panel">
+        <h1 data-review-id="login-title">欢迎使用 OctoPush</h1>
+      <div class="login-desc" data-review-id="login-description">登录后会自动进入可访问的团队工作区。OctoPush 会在本机安全保存登录态，并在下次启动时优先恢复默认团队。</div>
+        <div class="login-expired" id="login-expired" data-review-id="login-expired-message">登录状态已过期，请重新登录。</div>
+        <div class="login-note" data-review-id="login-auth-note">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+          <div>将打开统一登录平台完成账号登录与授权，授权成功后会自动回到 OctoPush。</div>
+        </div>
+        <div class="agreement" data-review-id="login-agreement">登录前阅读并同意 <a href="#">《服务协议》</a> 和 <a href="#">《隐私政策》</a></div>
+        <button class="btn-login" data-review-id="login-submit" onclick="startUnifiedLogin()">使用统一账号登录</button>
+        <div class="login-links" data-review-id="login-links">
+          <a href="#" data-review-id="login-back-startup" onclick="showPage('startup-page'); return false;">返回启动检查</a>
+          <div class="no-account"><span>已拿到邀请？</span><a href="#" data-review-id="login-open-invite" onclick="showPage('web-relay-page'); return false;">通过链接加入</a></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="login-check-page" class="page" data-page="auth-waiting">
+  <div class="login-bg">
+    <div class="login-bg-brand" data-review-id="check-brand">
+      <div class="logo-box">O</div>
+      <span>OctoPush</span>
+    </div>
+    <div class="slogan">OctoPush，<br>您身边的AI助手</div>
+    <div class="tags">
+      <span>多平台协作</span>
+      <span>安全可控</span>
+      <span>智能决策</span>
+      <span>实时响应</span>
+      <span>辅助决策</span>
+    </div>
+  </div>
+  <div class="login-right" data-review-id="check-right-panel">
+    <div class="drag-bar" data-review-id="check-drag-bar"></div>
+    <div class="login-form-wrap" data-review-id="check-form-wrap">
+      <div class="login-form" id="check-panel" data-review-id="check-panel"></div>
+    </div>
+  </div>
+</div>
+
+<div id="web-relay-page" class="page auth-page" data-page="web-relay">
+  <div class="title-bar">
+    <div class="traffic-lights"><span class="tl-red"></span><span class="tl-yellow"></span><span class="tl-green"></span></div>
+  </div>
+  <div class="auth-body">
+    <div class="auth-card narrow">
+      <div class="auth-brand"><div class="logo-box">O</div><span>OctoPush</span></div>
+      <div class="auth-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M21 14v5a2 2 0 0 1-2 2h-5"/><path d="M3 10V5a2 2 0 0 1 2-2h5"/></svg>
+      </div>
+      <div class="auth-title">正在打开 OctoPush...</div>
+      <div class="auth-sub">如果没有自动打开，请下载客户端或复制邀请码后手动加入。客户端被拉起后会继续处理本次加入动作。</div>
+      <div class="relay-code">ABCD1234</div>
+      <div class="auth-actions">
+        <button class="btn-auth-primary" data-review-id="web-relay-open-app" onclick="showCheckState('invite-launch')">打开 OctoPush</button>
+        <button class="btn-auth-secondary">下载 OctoPush</button>
+        <button class="btn-auth-ghost" onclick="copyInviteCode()">复制邀请码</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="main-page" class="page" data-page="main-workspace">
+  <!-- Title Bar -->
+  <div class="title-bar">
+    <div class="traffic-lights">
+      <span class="tl-red"></span>
+      <span class="tl-yellow"></span>
+      <span class="tl-green"></span>
+    </div>
+  </div>
+  <div class="main-body">
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-wrap">
+          <div class="logo-icon">O</div>
+          <span class="logo-text">OctoPush</span>
+        </div>
+        <button class="sidebar-toggle" onclick="toggleSidebar()" title="收起/展开侧边栏">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+        </button>
+      </div>
+      <div class="sidebar-nav">
+        <div class="nav-item active">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+          <span>我的Claw</span>
+        </div>
+      </div>
+      <div class="sidebar-footer">
+        <div class="user-card" onclick="toggleUserMenu(event)">
+          <div class="user-avatar">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div class="user-info"><div class="name">用户</div></div>
+          <div class="user-chevron"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(90deg)"><path d="m18 15-6-6-6 6"/></svg></div>
+          <div class="user-dropdown" id="user-dropdown">
+            <div class="dd-item" onclick="event.stopPropagation(); hideUserMenu(); showModal('version-modal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg><span>版本信息</span></div>
+            <div class="dd-item" onclick="event.stopPropagation(); hideUserMenu(); showModal('contact-modal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg><span>联系我们</span></div>
+            <div class="dd-item" onclick="showModal('logout-modal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span>退出登录</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+
+      <!-- ===== Claw List View ===== -->
+      <div id="claw-list" class="view active">
+        <h1 class="page-title">我的 Claw</h1>
+        <p class="page-sub">管理本地的所有 OpenClaw 实例</p>
+        <div class="list-toolbar">
+          <div class="search-box">
+            <div class="s-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+            <input type="text" placeholder="搜索你的 Claw...">
+          </div>
+          <button class="btn-create" onclick="showView('create-claw')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            创建 Claw
+          </button>
+        </div>
+
+        <div class="card-grid">
+          <!-- Card 1: Running -->
+          <div class="claw-card" onclick="showView('claw-detail')">
+            <div class="card-head">
+              <div class="claw-avatar purple">M</div>
+              <div class="card-name-wrap">
+                <span class="card-name">My-Claw-2026</span>
+                <div class="card-id">ID: claw-a8f3d2e1</div>
+              </div>
+              <span class="status-badge badge-running">运行中</span>
+            </div>
+            <div class="card-metrics">
+              <div class="metric-box"><div class="m-label">消耗积分</div><div class="m-value">1.2K</div></div>
+              <div class="metric-box"><div class="m-label">网关延迟</div><div class="m-value">32ms</div></div>
+              <div class="metric-box"><div class="m-label">定时任务</div><div class="m-value">3个</div></div>
+            </div>
+            <div class="card-actions" onclick="event.stopPropagation()">
+              <button class="more-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button>
+              <div class="right-btns">
+                <button class="btn-outline-sm" onclick="showModal('stop-modal')">停止Claw</button>
+                <button class="btn-primary-sm">对话</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 2: Stopped -->
+          <div class="claw-card" onclick="showView('claw-detail')">
+            <div class="card-head">
+              <div class="claw-avatar purple">T</div>
+              <div class="card-name-wrap">
+                <span class="card-name">Test-Agent</span>
+                <div class="card-id">ID: claw-7b2c91f4</div>
+              </div>
+              <span class="status-badge badge-stopped">已停止</span>
+            </div>
+            <div class="card-metrics">
+              <div class="metric-box"><div class="m-label">消耗积分</div><div class="m-value">456</div></div>
+              <div class="metric-box"><div class="m-label">网关延迟</div><div class="m-value">-</div></div>
+              <div class="metric-box"><div class="m-label">定时任务</div><div class="m-value">0个</div></div>
+            </div>
+            <div class="card-actions" onclick="event.stopPropagation()">
+              <button class="more-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button>
+              <div class="right-btns">
+                <button class="btn-outline-sm">启动Claw</button>
+                <button class="btn-primary-sm" disabled>对话</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 3: Starting -->
+          <div class="claw-card" onclick="showView('claw-detail')">
+            <div class="card-head">
+              <div class="claw-avatar purple">D</div>
+              <div class="card-name-wrap">
+                <span class="card-name">Dev-Assistant</span>
+                <div class="card-id">ID: claw-3e5f8a0d</div>
+              </div>
+              <span class="status-badge badge-starting">启动中</span>
+            </div>
+            <div class="card-metrics">
+              <div class="metric-box"><div class="m-label">消耗积分</div><div class="m-value">89</div></div>
+              <div class="metric-box"><div class="m-label">网关延迟</div><div class="m-value">-</div></div>
+              <div class="metric-box"><div class="m-label">定时任务</div><div class="m-value">1个</div></div>
+            </div>
+            <div class="card-actions" onclick="event.stopPropagation()">
+              <button class="more-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button>
+              <div class="right-btns">
+                <button class="btn-outline-sm" disabled>启动Claw</button>
+                <button class="btn-primary-sm" disabled>对话</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Unmanaged Card -->
+          <div class="unmanaged-card">
+            <div class="card-head">
+              <div class="claw-avatar gray"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg></div>
+              <div class="card-name-wrap" style="flex:1;min-width:0">
+                <span class="card-name" style="color:rgba(0,0,0,0.5)">Local-Claw</span>
+                <div class="card-id" style="color:var(--t4)">需要完善配置</div>
+              </div>
+              <span class="status-badge badge-stopped">未启动</span>
+            </div>
+            <div class="desc">这个 Claw 不是通过 OctoPush 创建的，缺少积分来源等必要配置，点击「切换配置」即可完善，完成后可在此统一管理。</div>
+            <button class="btn-full-purple" onclick="showView('configure-claw')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+              切换配置
+            </button>
+          </div>
+
+          <!-- Create Card -->
+          <div class="create-card" onclick="showView('create-claw')">
+            <div class="cc-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+            <div class="cc-title">创建 Claw</div>
+            <div class="cc-sub">创建一个新的 OpenClaw 实例</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Claw Detail View ===== -->
+      <div id="claw-detail" class="view">
+        <div class="detail-header">
+          <div class="detail-back" onclick="showView('claw-list')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            返回我的 Claw
+          </div>
+          <div class="detail-title-row">
+            <div class="claw-avatar solid-purple"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg></div>
+            <div class="detail-info">
+              <h1>My-Claw-2026</h1>
+              <div class="detail-meta">
+                <span>ID: claw-a8f3d2e1</span>
+                <span class="sep">·</span>
+                <span>PID 12345</span>
+                <span class="sep">·</span>
+                <span style="display:flex;align-items:center;gap:4px">
+                  <span class="dot" style="background:#22c55e"></span>
+                  <span style="color:#16a34a">运行中</span>
+                </span>
+              </div>
+            </div>
+            <div class="detail-btns">
+              <button class="btn-detail purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>打开后台</button>
+              <button class="btn-detail purple" onclick="showModal('restart-modal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>重启</button>
+              <button class="btn-detail outline-red" onclick="showModal('stop-modal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12"/></svg>停止</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="detail-tabs">
+          <div class="tab-btn active" data-tab="overview" onclick="switchTab(this, 'overview')">概览</div>
+          <div class="tab-btn" data-tab="logs" onclick="switchTab(this, 'logs')">运行日志</div>
+        </div>
+
+        <!-- Overview Tab -->
+        <div id="tab-overview" class="tab-content active">
+          <div class="config-card">
+            <div class="cc-head">
+              <h2>OpenClaw配置信息</h2>
+              <div class="link">详细账单请前往 DeepMiner 我的Claw 查看 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></div>
+            </div>
+            <div class="config-grid">
+              <div class="config-item">
+                <div class="ci-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+                <div><div class="ci-label">运行环境</div><div class="ci-value">macOS 14.3 arm64</div></div>
+              </div>
+              <div class="config-item">
+                <div class="ci-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></div>
+                <div><div class="ci-label">应用数据目录</div><div class="ci-value">~/.openclaw</div></div>
+              </div>
+              <div class="config-item">
+                <div class="ci-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+                <div><div class="ci-label">积分来源团队</div><div class="ci-value">DeepMiner Team</div></div>
+              </div>
+              <div class="config-item">
+                <div class="ci-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
+                <div><div class="ci-label">后台地址</div><div class="ci-value">http://localhost:3100</div></div>
+              </div>
+            </div>
+            <div class="cc-footer">
+              <button class="btn-purple-md" onclick="showView('configure-claw')">重新配置</button>
+            </div>
+          </div>
+
+          <div class="health-card">
+            <div class="health-head">
+              <h2>健康检查</h2>
+              <button class="recheck-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>重新检查</button>
+            </div>
+            <div class="health-chips">
+              <div class="health-chip"><span class="hc-dot" style="background:#22c55e"></span><span class="hc-label">OpenClaw 进程</span><span class="hc-value">正常</span></div>
+              <div class="health-chip"><span class="hc-dot" style="background:#22c55e"></span><span class="hc-label">Gateway 连接</span><span class="hc-value">已连接</span></div>
+              <div class="health-chip"><span class="hc-dot" style="background:#22c55e"></span><span class="hc-label">Node.js 环境</span><span class="hc-value">v24.11.1</span></div>
+              <div class="health-chip"><span class="hc-dot" style="background:#f59e0b"></span><span class="hc-label">网络连接</span><span class="hc-value">延迟较高</span></div>
+              <div class="health-chip"><span class="hc-dot" style="background:#22c55e"></span><span class="hc-label">磁盘空间</span><span class="hc-value">充足</span></div>
+            </div>
+            <div class="fix-grid">
+              <div class="fix-card">
+                <div class="fc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 21h10"/><path d="M12 21a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9Z"/><path d="M11.38 12a2.4 2.4 0 0 1-.4-4.77 2.4 2.4 0 0 1 3.2-2.77 2.4 2.4 0 0 1 3.47-.63 2.4 2.4 0 0 1 3.37 3.37 2.4 2.4 0 0 1-1.1 3.7 2.51 2.51 0 0 1 .03 1.1"/><path d="m13 12-4.6 4.6a2.12 2.12 0 0 0 3 3l.4-.4"/></svg></div>
+                <div class="fc-info"><div class="fc-title">执行DOCTOR命令</div><div class="fc-desc">执行 OpenClaw 自带的 DOCTOR 修复命令，可用于快速解决日常使用中的常见问题</div></div>
+                <button class="btn-fix-outline">快速修复</button>
+              </div>
+              <div class="fix-card">
+                <div class="fc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg></div>
+                <div class="fc-info"><div class="fc-title">AI深度修复</div><div class="fc-desc">消耗积分使用 AI 对OpenClaw进行深度修复，适用于 DOCTOR指令无法解决的问题。</div></div>
+                <button class="btn-fix-purple">AI深度修复</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Logs Tab -->
+        <div id="tab-logs" class="tab-content">
+          <div class="logs-toolbar">
+            <button class="log-type-btn">Gateway 日志 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
+            <button class="btn-export"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>导出</button>
+          </div>
+          <div class="logs-area">
+            <p class="logs-title">运行日志</p>
+            <div class="log-entry success"><span class="le-time">[2026-04-27 15:30:21]</span><span class="le-prefix">✓</span><span class="le-msg">Gateway started on port 3100</span></div>
+            <div class="log-entry info"><span class="le-time">[2026-04-27 15:30:22]</span><span class="le-prefix"></span><span class="le-msg">Loading configuration from ~/.openclaw/config.yml</span></div>
+            <div class="log-entry success"><span class="le-time">[2026-04-27 15:30:23]</span><span class="le-prefix">✓</span><span class="le-msg">Connected to cloud gateway wss://gw.openclaw.ai</span></div>
+            <div class="log-entry info"><span class="le-time">[2026-04-27 15:30:24]</span><span class="le-prefix"></span><span class="le-msg">Agent session initialized, model: claude-sonnet-4-20250514</span></div>
+            <div class="log-entry warn"><span class="le-time">[2026-04-27 15:31:05]</span><span class="le-prefix">⚠</span><span class="le-msg">SSE connection timeout, retrying in 5s...</span></div>
+            <div class="log-entry success"><span class="le-time">[2026-04-27 15:31:11]</span><span class="le-prefix">✓</span><span class="le-msg">SSE connection re-established</span></div>
+            <div class="log-entry info"><span class="le-time">[2026-04-27 15:32:00]</span><span class="le-prefix"></span><span class="le-msg">Heartbeat check: all systems operational</span></div>
+            <div class="log-entry info"><span class="le-time">[2026-04-27 15:35:12]</span><span class="le-prefix"></span><span class="le-msg">Incoming message from dmwork channel</span></div>
+            <div class="log-entry success"><span class="le-time">[2026-04-27 15:35:15]</span><span class="le-prefix">✓</span><span class="le-msg">Response sent successfully (1.2s, 450 tokens)</span></div>
+            <div class="log-entry error"><span class="le-time">[2026-04-27 15:40:33]</span><span class="le-prefix">✕</span><span class="le-msg">Provider rate limit exceeded, queuing request</span></div>
+            <div class="log-entry info"><span class="le-time">[2026-04-27 15:40:38]</span><span class="le-prefix"></span><span class="le-msg">Request dequeued, processing...</span></div>
+            <div class="log-entry success"><span class="le-time">[2026-04-27 15:40:42]</span><span class="le-prefix">✓</span><span class="le-msg">Response sent successfully (3.8s, 1280 tokens)</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Configure Claw View ===== -->
+      <div id="configure-claw" class="view">
+        <div class="cfg-back" onclick="showView('claw-detail')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          返回
+        </div>
+        <h1>配置本地 Claw</h1>
+        <div class="cfg-form">
+          <div class="cfg-group">
+            <label><span class="req">*</span>Claw 名称</label>
+            <input type="text" value="My-Claw-2026" placeholder="请输入名称">
+          </div>
+
+          <div class="cfg-space-card">
+            <div class="cfg-group">
+              <label><span class="req">*</span>积分来源</label>
+              <select>
+                <option>DeepMiner 团队（DeepMiner Team）</option>
+                <option>DeepMiner 个人团队（Personal Team）</option>
+              </select>
+            </div>
+            <div class="cfg-row-2">
+              <div class="cfg-group">
+                <label><span class="req">*</span>剩余积分</label>
+                <input type="text" readonly value="8.5K">
+              </div>
+              <div class="cfg-group">
+                <label>团队到期时间</label>
+                <input type="text" readonly value="2026-12-31 23:59:59">
+              </div>
+            </div>
+            <div class="cfg-group">
+              <div class="cfg-model-info">
+                <label>默认模型</label>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+              </div>
+              <select>
+                <option>claude-sonnet-4-20250514 (推荐)</option>
+                <option>gpt-4o</option>
+                <option>claude-opus-4-6</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="cfg-footer">
+            <button class="btn-cfg-cancel" onclick="showView('claw-detail')">取消</button>
+            <button class="btn-cfg-confirm" onclick="showView('claw-detail')">确认</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Create Claw View ===== -->
+      <div id="create-claw" class="view">
+        <div class="create-header">
+          <div class="create-back" id="create-back-btn" onclick="createBack()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            返回
+          </div>
+          <h1>创建 Claw</h1>
+        </div>
+
+        <div class="step-bar" id="step-bar"></div>
+
+        <div class="step-content">
+          <!-- Step 1: Env Check -->
+          <div id="step-1" class="step-view active">
+            <div class="summary-card">
+              <div class="sc-title">安装摘要</div>
+              <div class="summary-grid">
+                <div class="summary-item">
+                  <div class="si-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>系统版本</div>
+                  <div class="si-value">macOS 14.3</div>
+                </div>
+                <div class="summary-item">
+                  <div class="si-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M2 9h2"/><path d="M20 15h2"/><path d="M20 9h2"/><path d="M9 2v2"/><path d="M9 20v2"/></svg>处理器架构</div>
+                  <div class="si-value">Apple Silicon (arm64)</div>
+                </div>
+                <div class="summary-item">
+                  <div class="si-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>固定安装版本</div>
+                  <div class="si-value">v1.2.8</div>
+                </div>
+                <div class="summary-item">
+                  <div class="si-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>应用数据目录</div>
+                  <div class="si-value">~/.openclaw</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="env-section">
+              <div class="env-title">本地环境（5/5）</div>
+              <div class="env-list">
+                <div class="env-item"><span class="ei-name">主机架构</span><div class="ei-status passed"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>通过</div></div>
+                <div class="env-item"><span class="ei-name">可写磁盘空间</span><div class="ei-status passed"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>62GB 可用</div></div>
+                <div class="env-item"><span class="ei-name">端口可用</span><div class="ei-status passed"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>3100</div></div>
+                <div class="env-item"><span class="ei-name">网络连接是否正常</span><div class="ei-status passed"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>通过</div></div>
+                <div class="env-item"><span class="ei-name">安装目录可写</span><div class="ei-status passed"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>通过</div></div>
+              </div>
+            </div>
+
+            <div class="step-footer">
+              <button class="btn-step-outline">重新检测</button>
+              <button class="btn-step-primary" onclick="goStep(2)">下一步</button>
+            </div>
+          </div>
+
+          <!-- Step 2: Config -->
+          <div id="step-2" class="step-view">
+            <div class="form-group">
+              <div class="fg-label">
+                <label>Claw 名称</label>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+              </div>
+              <input type="text" value="Claw-4827" placeholder="请输入名称">
+            </div>
+
+            <div class="form-group">
+              <div class="fg-label">
+                <label>Claw 积分来源</label>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+              </div>
+              <div class="space-model-row">
+                <select>
+                  <option>DeepMiner Team — 剩余 8,500 积分</option>
+                  <option>Personal Space — 剩余 2,100 积分</option>
+                </select>
+                <select>
+                  <option>claude-sonnet-4-20250514 (推荐)</option>
+                  <option>gpt-4o</option>
+                  <option>claude-opus-4-6</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="step-footer">
+              <button class="btn-step-outline" onclick="goStep(1)">上一步</button>
+              <button class="btn-step-primary" onclick="goStep(3)">安装 Claw</button>
+            </div>
+          </div>
+
+          <!-- Step 3: Install -->
+          <div id="step-3" class="step-view">
+            <div class="progress-card">
+              <div class="pc-row">
+                <div class="pc-logo"><span>DM</span></div>
+                <div class="pc-info">
+                  <div class="pc-title">安装成功</div>
+                  <div class="pc-sub">"Claw-4827" 已成功安装到本地</div>
+                </div>
+                <div class="pc-percent">100%</div>
+              </div>
+              <div class="progress-bar"><div class="fill" style="width:100%"></div></div>
+            </div>
+
+            <div class="install-steps">
+              <div class="install-step">
+                <div class="is-icon done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+                <div class="is-info"><div class="is-title">已完成应用目录初始化</div><div class="is-desc">本地数据目录创建完成</div></div>
+              </div>
+              <div class="install-step">
+                <div class="is-icon done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+                <div class="is-info"><div class="is-title">本地环境配置完成</div><div class="is-desc">Claw 已成功安装到本地</div></div>
+              </div>
+              <div class="install-step">
+                <div class="is-icon done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+                <div class="is-info"><div class="is-title">启动成功</div><div class="is-desc">Claw 服务已成功运行</div></div>
+              </div>
+            </div>
+
+            <div class="step-footer" style="justify-content:flex-end">
+              <button class="btn-step-primary" onclick="goStep(4)">下一步</button>
+            </div>
+          </div>
+
+          <!-- Step 4: Auth -->
+          <div id="step-4" class="step-view">
+            <div class="perm-title">为您的 OctoPush 应用打开以下设置</div>
+            <div class="perm-desc">为了保证OctoPush可以为您更好的服务，建议检查是否为本机Claw完成了以下授权</div>
+            <div class="perm-list">
+              <div class="perm-item">
+                <span class="pi-name">辅助功能权限</span>
+                <span class="pi-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></span>
+              </div>
+              <div class="perm-item">
+                <span class="pi-name">磁盘访问权限</span>
+                <span class="pi-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></span>
+              </div>
+              <div class="perm-item">
+                <span class="pi-name">屏幕共享权限</span>
+                <button class="btn-auth-sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>前往授权</button>
+              </div>
+            </div>
+
+            <div class="step-footer" style="margin-top:32px">
+              <button class="btn-step-outline" onclick="showView('claw-list')">跳过，暂不进行授权</button>
+              <button class="btn-step-primary" onclick="showView('claw-list')">完成</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODALS ===== -->
+<div class="modal-overlay" id="stop-modal">
+  <div class="modal-box">
+    <div class="modal-close" onclick="hideModal('stop-modal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
+    <div class="modal-title">OpenClaw停止</div>
+    <div class="modal-desc">确定要停止该Claw吗？停止后无法继续对话。</div>
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" onclick="hideModal('stop-modal')">取消</button>
+      <button class="btn-modal-confirm" onclick="hideModal('stop-modal')">确定</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="restart-modal">
+  <div class="modal-box">
+    <div class="modal-close" onclick="hideModal('restart-modal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
+    <div class="modal-title">OpenClaw重启</div>
+    <div class="modal-desc">确定要重启该Claw吗？重启期间服务会短暂中断。</div>
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" onclick="hideModal('restart-modal')">取消</button>
+      <button class="btn-modal-confirm" onclick="hideModal('restart-modal')">确定</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="logout-modal">
+  <div class="modal-box">
+    <div class="modal-close" onclick="hideModal('logout-modal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
+    <div class="modal-title">确认退出当前账号？</div>
+    <div class="modal-desc">退出后，你需要重新登录并进入可用团队。正在进行的同步或团队工作区准备任务将会停止。</div>
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" onclick="hideModal('logout-modal')">取消</button>
+      <button class="btn-modal-confirm" onclick="hideModal('logout-modal'); showPage('login-page')">退出登录</button>
+    </div>
+  </div>
+</div>
+
+<!-- Contact Us Modal -->
+<div class="modal-overlay contact-modal" id="contact-modal">
+  <div class="modal-box">
+    <div class="contact-header">
+      <h2>联系我们</h2>
+      <div class="close-btn" onclick="hideModal('contact-modal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
+    </div>
+    <div class="contact-body">
+      <div class="contact-text">尊敬的客户：<br>如果您想获取安装以及OctoPush使用上的帮助，请扫码添加我们的客服，谢谢！</div>
+      <div class="qr-placeholder">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        客服二维码
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Version Info Modal -->
+<div class="modal-overlay version-modal" id="version-modal">
+  <div class="modal-box">
+    <div class="modal-close" onclick="hideModal('version-modal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
+    <div class="ver-logo">O</div>
+    <div class="ver-title">OctoPush</div>
+    <div class="ver-num">版本：v1.2.8</div>
+    <div class="ver-update" onclick="hideModal('version-modal')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+      版本更新
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="delete-modal">
+  <div class="modal-box">
+    <div class="modal-close" onclick="hideModal('delete-modal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
+    <div class="modal-title">删除 Claw</div>
+    <div class="modal-desc">删除后该 Claw 的所有配置和数据将无法恢复，确认删除？</div>
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" onclick="hideModal('delete-modal')">取消</button>
+      <button class="btn-modal-confirm" onclick="hideModal('delete-modal')">确认</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="leave-modal">
+  <div class="modal-box">
+    <div class="modal-close" onclick="hideModal('leave-modal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
+    <div class="modal-title">退出创建</div>
+    <div class="modal-desc">退出后当前配置将丢失，确认返回主界面？</div>
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" onclick="hideModal('leave-modal')">取消</button>
+      <button class="btn-modal-confirm" onclick="hideModal('leave-modal'); showView('claw-list'); currentStep=1; renderStepBar();">确认退出</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== Page Navigation =====
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const page = document.getElementById(id);
+  page.classList.add('active');
+  const section = page.dataset.page;
+  if (section && window.parent) {
+    window.parent.postMessage({ type: 'proto-viewer:navigate', section }, '*');
+  }
+}
+
+// ===== Login =====
+function doLogin() {
+  startUnifiedLogin();
+}
+function startUnifiedLogin() {
+  document.getElementById('login-expired')?.classList.remove('show');
+  showCheckState('auth-waiting');
+}
+function completeLogin() {
+  showCheckState('restore-last-team');
+}
+function showLoginExpired() {
+  showPage('login-page');
+  document.getElementById('login-expired')?.classList.add('show');
+}
+function togglePassword() {
+  const inp = document.getElementById('login-password');
+  if (!inp) return;
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+function showMainWorkspace() {
+  showPage('main-page');
+  showView('claw-list');
+}
+function showLoggedInView(id) {
+  const map = {
+    'flow-restore': 'restore-last-team',
+    'flow-team-expired': 'team-expired',
+    'flow-no-team': 'no-team',
+    'flow-invite-launch': 'invite-launch',
+    'flow-workspace-prep': 'workspace-prepare',
+    'flow-workspace-failed': 'workspace-failed'
+  };
+  showCheckState(map[id] || 'restore-last-team');
+}
+function selectTeam(el) {
+  document.querySelectorAll('.team-card').forEach(card => card.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function enterSelectedTeam() {
+  showCheckState('workspace-prepare');
+}
+function focusJoinInput() {
+  requestAnimationFrame(() => document.querySelector('[data-review-id="invite-code-input"]')?.focus());
+}
+function joinTeam(button) {
+  const panel = button.closest('.join-panel');
+  const input = panel?.querySelector('.join-input');
+  const feedback = panel?.querySelector('.join-feedback');
+  const raw = (input?.value || '').trim();
+  if (!raw || raw.toUpperCase() === 'INVALID') {
+    feedback?.classList.add('show');
+    return;
+  }
+  feedback?.classList.remove('show');
+  showCheckState('workspace-prepare');
+}
+function showJoinError() {
+  showCheckState('no-team');
+  const input = document.querySelector('[data-review-id="invite-code-input"]');
+  const feedback = document.querySelector('[data-review-id="invite-code-error"]');
+  if (input) input.value = 'INVALID';
+  feedback?.classList.add('show');
+}
+function showCheckState(state) {
+  const panel = document.getElementById('check-panel');
+  const page = document.getElementById('login-check-page');
+  page.dataset.page = state;
+  panel.innerHTML = CHECK_STATES[state] || CHECK_STATES['auth-waiting'];
+  showPage('login-check-page');
+  requestAnimationFrame(() => {
+    if (state === 'no-team') document.querySelector('[data-review-id="invite-code-input"]')?.focus();
+  });
+}
+const CHECK_STATES = {
+  'auth-waiting': `
+    <div data-review-id="auth-waiting-panel">
+      <h1 data-review-id="auth-waiting-title">正在等待统一登录平台授权</h1>
+      <div class="login-desc" data-review-id="auth-waiting-description">请在打开的页面中完成登录与授权。授权成功后，OctoPush 会继续校验账号和默认团队。</div>
+      <div class="login-note" data-review-id="auth-waiting-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg><div>授权成功后会自动回到 OctoPush。</div></div>
+      <button class="btn-login" data-review-id="auth-refresh-button" onclick="completeLogin()">刷新登录状态</button>
+      <div class="login-links" data-review-id="auth-waiting-actions"><a href="#" onclick="showPage('login-page');return false;">重新登录</a><a href="#" onclick="showPage('startup-page');return false;">退出</a></div>
+    </div>`,
+  'restore-last-team': `
+    <div data-review-id="restore-panel">
+      <h1 data-review-id="restore-title">正在校验默认团队</h1>
+      <div class="login-desc" data-review-id="restore-description">当前账号已登录，正在确认默认团队是否可进入。校验通过后会自动准备团队工作区。</div>
+      <div class="auth-step-list" data-review-id="restore-step-list">
+        <div class="auth-step done" data-review-id="restore-account-step"><span class="dot"></span><span>账号状态校验</span><span class="meta">通过</span></div>
+        <div class="auth-step done" data-review-id="restore-team-step"><span class="dot"></span><span>默认团队可访问</span><span class="meta">OpenClaw 团队</span></div>
+        <div class="auth-step" data-review-id="restore-workspace-step"><span class="dot"></span><span>准备团队工作区</span><span class="meta">等待</span></div>
+      </div>
+      <button class="btn-login" data-review-id="restore-continue-button" onclick="showCheckState('workspace-prepare')">继续准备工作区</button>
+      <div class="login-links" data-review-id="restore-actions"><a href="#" onclick="showCheckState('no-team');return false;">模拟无可进入团队</a><a href="#" onclick="showCheckState('team-expired');return false;">模拟团队不可用</a></div>
+    </div>`,
+  'team-expired': `
+    <div data-review-id="team-expired-panel">
+      <h1 data-review-id="team-expired-title">无法进入默认团队</h1>
+      <div class="login-desc" data-review-id="team-expired-description">你可能已被移出该团队，或该团队当前不可用。OctoPush 不提供团队选择，请通过邀请码加入可用团队。</div>
+      <div class="login-note" data-review-id="team-expired-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><div>只有在当前校验界面，用户可以退出登录或输入邀请码。</div></div>
+      <button class="btn-login" data-review-id="team-expired-join-button" onclick="showCheckState('no-team')">加入团队</button>
+      <div class="login-links" data-review-id="team-expired-actions"><a href="#" onclick="showCheckState('restore-last-team');return false;">重新检查</a><a href="#" onclick="showModal('logout-modal');return false;">退出当前账号</a></div>
+    </div>`,
+  'no-team': `
+    <div data-review-id="no-team-panel">
+      <h1 data-review-id="no-team-title">你还没有可进入的团队</h1>
+      <div class="login-desc" data-review-id="no-team-description">请使用团队管理员提供的邀请码加入团队。邀请链接中的有效部分就是邀请码。</div>
+      <div class="join-panel" data-review-id="invite-code-panel">
+        <div class="join-input-wrap" data-review-id="invite-code-input-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><input class="join-input" data-review-id="invite-code-input" type="text" placeholder="输入邀请码"></div>
+        <button class="btn-auth-primary" data-review-id="join-team-submit" onclick="joinTeam(this)">加入团队</button>
+        <div class="join-feedback" data-review-id="invite-code-error">邀请码无效，请检查后重试。</div>
+      </div>
+      <div class="login-links" data-review-id="no-team-actions"><a href="#" onclick="showModal('contact-modal');return false;">没有邀请码？联系助理</a><a href="#" onclick="showModal('logout-modal');return false;">退出当前账号</a></div>
+    </div>`,
+  'invite-launch': `
+    <div data-review-id="invite-launch-panel">
+      <h1 data-review-id="invite-launch-title">通过邀请码加入团队</h1>
+      <div class="login-desc" data-review-id="invite-launch-description">OctoPush 已被邀请链接拉起，并解析出邀请码。若用户未登录，登录完成后会继续本次加入动作。</div>
+      <div class="invite-summary" data-review-id="invite-summary">
+        <div class="row" data-review-id="invite-code-row"><span class="label">邀请码</span><span class="value">ABCD1234</span></div>
+        <div class="row" data-review-id="invite-team-row"><span class="label">即将加入</span><span class="value">OpenClaw 团队</span></div>
+        <div class="row" data-review-id="invite-user-row"><span class="label">当前账号</span><span class="value">user@example.com</span></div>
+      </div>
+      <button class="btn-login" data-review-id="invite-join-submit" onclick="showCheckState('workspace-prepare')">加入团队</button>
+      <div class="login-links" data-review-id="invite-launch-actions"><a href="#" onclick="showPage('login-page');return false;">先登录并继续加入</a><a href="#" onclick="showCheckState('no-team');return false;">更换邀请码</a></div>
+    </div>`,
+  'workspace-prepare': `
+    <div data-review-id="workspace-prepare-panel">
+      <h1 data-review-id="workspace-prepare-title">正在准备团队工作区</h1>
+      <div class="login-desc" data-review-id="workspace-prepare-description">正在同步团队配置、加载你的权限并检查本地环境。</div>
+      <div class="auth-step-list" data-review-id="workspace-prepare-steps">
+        <div class="auth-step done" data-review-id="workspace-config-step"><span class="dot"></span><span>同步团队配置</span><span class="meta">完成</span></div>
+        <div class="auth-step done" data-review-id="workspace-permission-step"><span class="dot"></span><span>加载你的权限</span><span class="meta">完成</span></div>
+        <div class="auth-step" data-review-id="workspace-env-step"><span class="dot"></span><span>检查本地环境</span><span class="meta">进行中</span></div>
+      </div>
+      <button class="btn-login" data-review-id="workspace-complete-button" onclick="showMainWorkspace()">准备完成</button>
+      <div class="login-links" data-review-id="workspace-prepare-actions"><a href="#" onclick="showCheckState('workspace-failed');return false;">模拟失败</a></div>
+    </div>`,
+  'workspace-failed': `
+    <div data-review-id="workspace-failed-panel">
+      <h1 data-review-id="workspace-failed-title">无法进入该团队</h1>
+      <div class="login-desc" data-review-id="workspace-failed-description">团队配置或权限加载失败，请重试。失败不会清除当前登录态。</div>
+      <button class="btn-login" data-review-id="workspace-retry-button" onclick="showCheckState('workspace-prepare')">重试</button>
+      <div class="login-links" data-review-id="workspace-failed-actions"><a href="#" onclick="showCheckState('no-team');return false;">返回加入团队</a><a href="#" onclick="showModal('logout-modal');return false;">退出当前账号</a></div>
+    </div>`
+};
+function navigatePrototypeSection(section) {
+  const target = document.querySelector(`.prototype-sync-controls [data-page="${section}"]`);
+  if (target) target.click();
+}
+window.navigatePrototypeSection = navigatePrototypeSection;
+function copyInviteCode() {
+  if (navigator.clipboard) navigator.clipboard.writeText('ABCD1234');
+}
+window.addEventListener('message', (event) => {
+  if (event.data?.type !== 'prd-viewer:navigate') return;
+  navigatePrototypeSection(event.data.section);
+});
+function applySectionFromHash() {
+  const match = location.hash.match(/section=([a-z0-9-]+)/);
+  if (match) navigatePrototypeSection(match[1]);
+}
+window.addEventListener('hashchange', applySectionFromHash);
+applySectionFromHash();
+
+// ===== View Navigation =====
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  const view = document.getElementById(id);
+  view.classList.add('active');
+  const section = view.dataset.page;
+  if (section && window.parent) {
+    window.parent.postMessage({ type: 'proto-viewer:navigate', section }, '*');
+  }
+  if (id === 'create-claw') { currentStep = 1; renderStepBar(); renderSteps(); }
+}
+
+// ===== Sidebar =====
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('collapsed');
+}
+
+// ===== User Menu =====
+function toggleUserMenu(e) {
+  e.stopPropagation();
+  const dd = document.getElementById('user-dropdown');
+  dd.classList.toggle('open');
+}
+document.addEventListener('click', () => {
+  document.getElementById('user-dropdown')?.classList.remove('open');
+});
+function hideUserMenu() {
+  document.getElementById('user-dropdown')?.classList.remove('open');
+}
+
+// ===== Tabs =====
+function switchTab(el, tabId) {
+  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-' + tabId).classList.add('active');
+}
+
+// ===== Modals =====
+function showModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+function hideModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// ===== Create Claw Steps =====
+let currentStep = 1;
+const STEPS = ['本地环境检测', '配置信息', '安装 Claw', '完成授权'];
+
+function renderStepBar() {
+  const bar = document.getElementById('step-bar');
+  bar.innerHTML = STEPS.map((label, i) => {
+    const step = i + 1;
+    const isActive = step === currentStep;
+    const circleClass = isActive ? 'active' : 'default';
+    const labelClass = isActive ? 'active' : 'default';
+    let html = `<div class="step-item"><div class="step-circle ${circleClass}">${step}</div><span class="step-label ${labelClass}">${label}</span></div>`;
+    if (i < STEPS.length - 1) html += `<span class="step-sep">···</span>`;
+    return html;
+  }).join('');
+}
+
+function renderSteps() {
+  for (let i = 1; i <= 4; i++) {
+    const el = document.getElementById('step-' + i);
+    if (el) el.classList.toggle('active', i === currentStep);
+  }
+  // Hide back button on step 3
+  const backBtn = document.getElementById('create-back-btn');
+  if (backBtn) backBtn.style.display = currentStep === 3 ? 'none' : 'flex';
+}
+
+function goStep(n) {
+  currentStep = n;
+  renderStepBar();
+  renderSteps();
+}
+
+function createBack() {
+  if (currentStep === 4) { showView('claw-list'); currentStep = 1; return; }
+  showModal('leave-modal');
+}
+
+// Init step bar
+renderStepBar();
+
+// ===== Keyboard: Enter to login =====
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && document.getElementById('login-page').classList.contains('active')) {
+    startUnifiedLogin();
+  }
+});
+</script>
+</body>
+</html>
