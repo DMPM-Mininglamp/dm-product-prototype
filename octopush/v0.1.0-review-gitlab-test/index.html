@@ -2334,6 +2334,18 @@
       return /^[\x21-\x7E]+$/.test(value);
     }
 
+    function clearSubmittedComments() {
+      document.querySelectorAll('.prd-highlighted').forEach(el =>
+        el.classList.remove('prd-highlighted')
+      );
+      comments = [];
+      nextId = 1;
+      renderPins();
+      if (typeof renderPrdMarkers === 'function') renderPrdMarkers();
+      renderCommentList();
+      updateAnnoCount();
+    }
+
     async function submitGitlabIssue() {
       if (comments.length === 0) {
         showToast('没有评论可提交');
@@ -2405,7 +2417,8 @@
           throw new Error(msg);
         }
 
-        showToast(`已创建 GitLab Issue #${result.iid}`);
+        clearSubmittedComments();
+        showToast(`已创建 GitLab Issue #${result.iid}，已清空评论`);
         if (result.web_url && confirm(`Issue 已创建：#${result.iid}\n是否打开？`)) {
           window.open(result.web_url, '_blank', 'noopener');
         }
